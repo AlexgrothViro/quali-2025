@@ -91,3 +91,4 @@ env/
 *.exe
 *.out
 data/assemblies/
+db/ptv_teschovirus.*
