@@ -92,3 +92,4 @@ env/
 *.out
 data/assemblies/
 db/ptv_teschovirus.*
+ref/host/sus_scrofa_bt2.*.bt2
