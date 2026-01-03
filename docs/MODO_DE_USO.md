@@ -10,8 +10,9 @@ Este documento resume como rodar o pipeline de PTV em uma amostra, incluindo a p
   - velveth, velvetg
   - blastn, makeblastdb
   - bowtie2
+  - esearch, efetch (EDirect)
   - python3
-  - curl + EDirect (para baixar sequências do NCBI)
+  - (opcional) curl
 
 O repositório deve estar clonado e os diretórios básicos criados:
 

@@ -11,6 +11,26 @@ A ideia é ter algo **simples de rodar em qualquer máquina Linux/WSL2**, usando
 
 ---
 
+## 0. Ambiente e requisitos
+
+Para rodar os testes básicos (`make test`), instale e garanta no `PATH`:
+
+- `velveth`, `velvetg` (Velvet)
+- `blastn`, `makeblastdb` (BLAST+)
+- `bowtie2`
+- `esearch`, `efetch` (EDirect do NCBI)
+- `python3`
+- **Opcional:** `curl` (usado em alguns downloads HTTP)
+
+Variáveis importantes:
+
+- `BLAST_DB`: caminho *prefixo* do banco BLAST de PTV (sem extensão).  
+  Após gerar o banco com `./scripts/10_build_ptv_db.sh`, defina, por exemplo:  
+  `export BLAST_DB="$PWD/db/ptv_teschovirus"`
+
+> Se esearch/efetch não estiverem instalados (EDirect), consulte:  
+> https://www.ncbi.nlm.nih.gov/books/NBK179288/
+
 ## 1. Estrutura do repositório
 
 A organização básica é:
@@ -39,4 +59,3 @@ quali-2025/
     ├── 03_filter_host.sh        # filtra leituras do hospedeiro (Sus scrofa) com Bowtie2
     ├── 10_build_ptv_db.sh       # baixa sequências de Teschovirus A (NCBI) e gera banco BLAST
     └── 11_download_sus_scrofa.sh# baixa o genoma do hospedeiro (Sus scrofa) via NCBI/EDirect
-
