@@ -6,15 +6,14 @@ REQUIRED_CMDS=(
   velveth
   velvetg
   blastn
-  bowtie2
   makeblastdb
-  esearch
-  efetch
+  bowtie2
+  bowtie2-build
   python3
 )
 
-# Programas opcionais (úteis para download direto via HTTP)
-OPTIONAL_CMDS=(curl)
+# Programas opcionais (úteis para download via NCBI/HTTP)
+OPTIONAL_CMDS=(esearch efetch curl)
 
 echo "== Verificando programas necessários no PATH =="
 
@@ -34,40 +33,40 @@ for cmd in "${OPTIONAL_CMDS[@]}"; do
     path=$(command -v "$cmd")
     printf "  [OK] %s encontrado em %s (opcional)\n" "$cmd" "$path"
   else
-    echo "  [OPCIONAL] $cmd não está no PATH (usado em alguns downloads HTTP)"
+    echo "  [OPCIONAL] $cmd não está no PATH (usado em downloads NCBI/HTTP)"
   fi
 done
 
 echo
+PTV_FASTA="data/ptv_db.fa"
+if [[ ! -s "$PTV_FASTA" ]]; then
+  echo "ATENÇÃO: FASTA de referência ausente em $PTV_FASTA."
+  echo "  Sugestão: make ptv-fasta-legacy   # cria data/ptv_db.fa a partir de data/ref/ptv_db.fa"
+else
+  echo "FASTA de referência encontrado: $PTV_FASTA"
+fi
+
+if ! command -v esearch >/dev/null 2>&1 || ! command -v efetch >/dev/null 2>&1; then
+  echo "AVISO: EDirect ausente (esearch/efetch) - necessário para baixar FASTA do NCBI."
+fi
+
 if [[ -n "${BLAST_DB:-}" ]]; then
   echo "BLAST_DB está definido como: $BLAST_DB"
-  echo "Certifique-se de que os arquivos de índice do BLAST existem nesse caminho."
-else
-  echo "ATENÇÃO: variável de ambiente BLAST_DB não definida."
-  echo "O alvo 'test-blast' do Makefile precisa dela."
-  echo "Após rodar ./scripts/10_build_ptv_db.sh defina, por exemplo:" \
-    "export BLAST_DB=\"\$PWD/db/ptv_teschovirus\""
-fi
-
-# Lembrete específico para EDirect
-if ! command -v esearch >/dev/null 2>&1 || ! command -v efetch >/dev/null 2>&1; then
-  echo
-  echo "EDirect ausente: instale EDirect (scripts esearch/efetch) " \
-       "conforme documentação do NCBI: https://www.ncbi.nlm.nih.gov/books/NBK179288/"
-fi
-
-if [[ -n "${BLAST_DB:-}" ]]; then
   missing_db_files=()
-  for ext in nhr nin nog nsd nsi nsq; do
+  for ext in nhr nin nsq; do
     file="${BLAST_DB}.${ext}"
     [[ -f "$file" ]] || missing_db_files+=("$file")
   done
   if (( ${#missing_db_files[@]} > 0 )); then
-    echo
-    echo "ATENÇÃO: índices BLAST ausentes para BLAST_DB:"
-    printf '  - %s\n' "${missing_db_files[@]}"
-    echo "Gere o banco com ./scripts/10_build_ptv_db.sh ou ajuste BLAST_DB."
+    echo "  [AVISO] Índices BLAST ausentes:"
+    printf '    - %s\n' "${missing_db_files[@]}"
+    echo "  Sugestão: make blastdb"
+  else
+    echo "  [OK] Índices BLAST encontrados."
   fi
+else
+  echo "ATENÇÃO: variável de ambiente BLAST_DB não definida."
+  echo "  Sugestão: make blastdb   # gera blastdb/ptv e exporte BLAST_DB=blastdb/ptv"
 fi
 
 if [[ $MISSING -ne 0 ]]; then
