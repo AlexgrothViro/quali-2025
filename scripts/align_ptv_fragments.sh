@@ -11,7 +11,7 @@ echo "=== Alinhamento PTV: referências + fragmentos ==="
 
 # checagens básicas
 if [[ ! -s "$REF_FA" ]]; then
-  echo "ERRO: Arquivo de referência não encontrado ou vazio: $REF_FA" >&2
+  echo "ERRO: Arquivo de referência não encontrado ou vazio: $REF_FA (rode scripts/10_build_ptv_db.sh antes)." >&2
   exit 1
 fi
 
