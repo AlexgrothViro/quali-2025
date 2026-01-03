@@ -1,4 +1,6 @@
 SHELL := /usr/bin/env bash
+.ONESHELL:
+.SHELLFLAGS := -euo pipefail -c
 
 SCRIPTS_DIR := scripts
 
@@ -6,63 +8,67 @@ SCRIPTS_DIR := scripts
 SAMPLE ?= 81554_S150
 KMER   ?= 31
 
-.PHONY: help setup_dirs test-env host-index ptv-db check-blast-db filter-host test-velvet test-blast test
+# Caminhos padrão (podem ser sobrescritos via ambiente ou linha de comando)
+REF_DIR       ?= data/ref
+REF_FASTA     ?= $(REF_DIR)/ptv_db.fa
+BLAST_DB      ?= blastdb/ptv
+BOWTIE2_INDEX ?= bowtie2/ptv
+
+.PHONY: help setup_dirs test-env filter-host test-velvet test-blast \
+	ptv-fasta ptv-fasta-legacy blastdb bowtie2-index test clean
 
 help:
 	@echo "Alvos disponíveis:"
-	@echo "  make help                 # mostra esta ajuda"
-	@echo "  make setup_dirs           # cria a estrutura básica de pastas (data/, results/, docs/)"
-	@echo "  make test-env             # verifica se os programas básicos estão instalados"
-	@echo "  make ptv-db               # baixa sequências de PTV e constrói o banco BLAST local"
-	@echo "  make host-index           # baixa Sus scrofa e cria o índice Bowtie2"
-	@echo "  make filter-host          # remove leituras alinhadas ao genoma de Sus scrofa"
-	@echo "  make test-velvet          # roda montagem de teste com Velvet usando SAMPLE e KMER"
-	@echo "  make test-blast           # roda BLAST dos contigs contra o banco definido em BLAST_DB"
-	@echo "  make test                 # executa test-env, filter-host, test-velvet e test-blast em sequência"
+	@echo "  make setup_dirs             # cria estrutura básica (data/, results/, docs/)"
+	@echo "  make ptv-fasta              # baixa/gera FASTA de PTV em $(REF_FASTA)"
+	@echo "  make ptv-fasta-legacy       # cria symlink data/ptv_db.fa -> $(REF_FASTA)"
+	@echo "  make blastdb                # gera banco BLAST em $(BLAST_DB) (usa $(REF_FASTA))"
+	@echo "  make bowtie2-index          # gera índice Bowtie2 em $(BOWTIE2_INDEX) (usa $(REF_FASTA))"
+	@echo "  make test-env               # verifica dependências básicas"
+	@echo "  make test                   # roda smoke test (prep + 90_smoke_test.sh)"
+	@echo "  make filter-host/test-velvet/test-blast # alvos individuais legados"
+	@echo "  make clean                  # remove artefatos gerados (blastdb, bowtie2, run_T1, logs/tmp/results)"
+	@echo
+	@echo "Variáveis úteis:"
+	@echo "  REF_FASTA=$(REF_FASTA)"
+	@echo "  BLAST_DB=$(BLAST_DB)"
+	@echo "  BOWTIE2_INDEX=$(BOWTIE2_INDEX)"
+	@echo "  SAMPLE=$(SAMPLE) KMER=$(KMER)"
 
 setup_dirs:
 	mkdir -p data/raw data/cleaned data/host_removed data/assemblies
-	mkdir -p results/qc results/blast results/phylogeny results/reports
-	mkdir -p docs
+	mkdir -p $(REF_DIR) results/qc results/blast results/phylogeny results/reports docs
 
 test-env:
 	$(SCRIPTS_DIR)/00_check_env.sh
 
-host-index:
-	@if [[ -f ref/host/sus_scrofa_bt2.1.bt2 ]]; then \
-		echo "Índice Bowtie2 já encontrado em ref/host/sus_scrofa_bt2.*.bt2 (pulei build)."; \
-	else \
-		$(SCRIPTS_DIR)/11_download_sus_scrofa.sh; \
-		bowtie2-build ref/host/sus_scrofa.fa ref/host/sus_scrofa_bt2; \
-	fi
+ptv-fasta: setup_dirs
+	$(SCRIPTS_DIR)/10_fetch_ptv_fasta.sh "$(REF_FASTA)"
 
-ptv-db:
-	@if compgen -G "db/ptv_teschovirus*.nhr" > /dev/null || compgen -G "db/ptv_teschovirus*.nin" > /dev/null; then \
-		echo "Banco BLAST de PTV já encontrado em db/ptv_teschovirus.* (pulei build)."; \
-	else \
-		$(SCRIPTS_DIR)/10_build_ptv_db.sh; \
-	fi
+ptv-fasta-legacy: ptv-fasta
+	mkdir -p data
+	ln -sf "$(abspath $(REF_FASTA))" data/ptv_db.fa
 
-check-blast-db:
-	@if [[ -z "$${BLAST_DB:-}" ]]; then \
-		echo "ERRO: variável BLAST_DB não definida."; \
-		echo "Defina, por exemplo: export BLAST_DB=\"$$PWD/db/ptv_teschovirus\""; \
-		echo "Se precisar gerar o banco, rode: make ptv-db"; \
-		exit 1; \
-	fi
-	@if ! compgen -G "$${BLAST_DB}.nhr" > /dev/null && ! compgen -G "$${BLAST_DB}.nin" > /dev/null; then \
-		echo "ERRO: banco BLAST não encontrado em $$BLAST_DB (.nhr/.nin)."; \
-		echo "Gere com: make ptv-db"; \
-		exit 1; \
-	fi
+blastdb: ptv-fasta
+	mkdir -p $(dir $(BLAST_DB))
+	makeblastdb -in "$(REF_FASTA)" -dbtype nucl -out "$(BLAST_DB)"
 
-filter-host: host-index
+bowtie2-index: ptv-fasta
+	mkdir -p $(dir $(BOWTIE2_INDEX))
+	bowtie2-build "$(REF_FASTA)" "$(BOWTIE2_INDEX)"
+
+filter-host:
 	$(SCRIPTS_DIR)/03_filter_host.sh $(SAMPLE)
 
 test-velvet:
 	$(SCRIPTS_DIR)/01_run_velvet.sh $(SAMPLE) $(KMER)
 
-test-blast: check-blast-db
+test-blast:
 	$(SCRIPTS_DIR)/02_run_blast.sh $(SAMPLE) $(KMER)
 
-test: test-env check-blast-db filter-host test-velvet test-blast
+test: test-env ptv-fasta-legacy blastdb bowtie2-index
+	BLAST_DB="$(BLAST_DB)" BOWTIE2_INDEX="$(BOWTIE2_INDEX)" \
+	$(SCRIPTS_DIR)/90_smoke_test.sh
+
+clean:
+	rm -rf run_T1 blastdb bowtie2 results logs tmp
