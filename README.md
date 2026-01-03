@@ -37,6 +37,5 @@ quali-2025/
     ├── 01_run_velvet.sh         # monta contigs com Velvet
     ├── 02_run_blast.sh          # roda BLAST dos contigs contra o banco de PTV
     ├── 03_filter_host.sh        # filtra leituras do hospedeiro (Sus scrofa) com Bowtie2
-    ├── 10_build_ptv_db.sh       # baixa sequências de Teschovirus A (NCBI) e gera banco BLAST
+    ├── 10_build_ptv_db.sh       # baixa sequências de Teschovirus A (NCBI), gera banco BLAST e salva data/ptv_db.fa
     └── 11_download_sus_scrofa.sh# baixa o genoma do hospedeiro (Sus scrofa) via NCBI/EDirect
-

@@ -26,6 +26,11 @@ O repositório deve estar clonado e os diretórios básicos criados:
     cd quali-2025
     ./scripts/10_build_ptv_db.sh
 
+O script salva duas cópias do FASTA baixado (com headers normalizados para o primeiro token):
+
+- `db/ptv_teschovirus.fasta` (usado para o `makeblastdb`)
+- `data/ptv_db.fa` (usado pelos scripts `extend_plan.py`, `emit_extend_fasta.py` e `align_ptv_fragments.sh`)
+
     # definir variável BLAST_DB (se ainda não estiver definida)
     export BLAST_DB="\$PWD/db/ptv_teschovirus"
 ### 2.2. Genoma de Sus scrofa + índice Bowtie2

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import sys, csv
+from pathlib import Path
 
 REPORT = "run_T1/work/ptv_report.tsv"
 REF_FA = "data/ptv_db.fa"
@@ -29,6 +30,10 @@ def read_fasta(path):
         if cur_id is not None:
             seqs[cur_id] = "".join(cur)
     return seqs
+
+if not Path(REF_FA).is_file():
+    sys.stderr.write(f"ERRO: referência PTV não encontrada em {REF_FA}. Rode scripts/10_build_ptv_db.sh primeiro.\n")
+    sys.exit(1)
 
 ref = read_fasta(REF_FA)
 ref_len = {k: len(v) for k,v in ref.items()}
