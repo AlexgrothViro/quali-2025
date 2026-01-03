@@ -18,14 +18,14 @@ O repositório deve estar clonado e os diretórios básicos criados:
 
     git clone https://github.com/AlexgrothViro/quali-2025.git
     cd quali-2025
-    make setup_dirs
+    make setup_dirs ptv-db host-index
 
 ## 2. Preparar bancos de referência (uma vez por máquina)
 
 ### 2.1. Banco de Porcine Teschovirus (PTV) para BLAST
 
     cd quali-2025
-    ./scripts/10_build_ptv_db.sh
+    make ptv-db
 
 O script salva duas cópias do FASTA baixado (com headers normalizados para o primeiro token):
 
@@ -37,8 +37,7 @@ O script salva duas cópias do FASTA baixado (com headers normalizados para o pr
 ### 2.2. Genoma de Sus scrofa + índice Bowtie2
 
     cd quali-2025
-    ./scripts/11_download_sus_scrofa.sh
-    bowtie2-build ref/host/sus_scrofa.fa ref/host/sus_scrofa_bt2
+    make host-index
 
 ## 3. Colocar os FASTQs da amostra
 

@@ -25,11 +25,17 @@ Para rodar os testes básicos (`make test`), instale e garanta no `PATH`:
 Variáveis importantes:
 
 - `BLAST_DB`: caminho *prefixo* do banco BLAST de PTV (sem extensão).  
-  Após gerar o banco com `./scripts/10_build_ptv_db.sh`, defina, por exemplo:  
+  Após gerar o banco com `make ptv-db` (ou `./scripts/10_build_ptv_db.sh`), defina, por exemplo:  
   `export BLAST_DB="$PWD/db/ptv_teschovirus"`
 
 > Se esearch/efetch não estiverem instalados (EDirect), consulte:  
 > https://www.ncbi.nlm.nih.gov/books/NBK179288/
+
+Configuração inicial sugerida (cria pastas, banco de PTV e índice do hospedeiro):
+
+```bash
+make setup_dirs ptv-db host-index
+```
 
 ## 1. Estrutura do repositório
 
